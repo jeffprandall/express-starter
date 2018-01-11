@@ -14,15 +14,6 @@ node {
         app = docker.build("jeffprandall/starter-express")
     }
 
-    stage('Test image') {
-        /* Ideally, we would run a test framework against our image.
-         * For this example, we're using a Volkswagen-type approach ;-) */
-
-        app.inside {
-            sh 'echo "Tests passed"'
-        }
-    }
-
     stage('Push image') {
         /* Finally, we'll push the image with two tags:
          * First, the incremental build number from Jenkins
@@ -31,6 +22,33 @@ node {
         docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
             app.push("${env.BUILD_NUMBER}")
             app.push("latest")
+        }
+    }
+
+    // stage('Host pulling latest container') {
+        
+    //     // stop the current container
+    //     sh "ssh ${rancher1}@${server} docker stop ${app}"
+    //     // download the newest version
+    //     sh "ssh user@${server} docker pull ${app}"
+    //     // start the new container
+    //     sh "ssh user@${server} docker run ${app}"
+    // }
+    stage('Stop current container') {
+        docker.withServer('tcp://localhost:2376') {
+            container.stop(app)
+        }
+    }
+
+    stage('Pull the latest image') {
+        docker.withServer('tcp://localhost:2376') {
+            docker.build("app:latest")
+        }
+    }
+
+    stage('Start updated container') {
+        docker.withServer('tcp://localhost:2376') {
+            docker.image(app)
         }
     }
 }
