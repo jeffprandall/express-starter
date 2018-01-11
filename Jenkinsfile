@@ -36,7 +36,7 @@ node {
     // }
     stage('Stop current container') {
         docker.withServer('tcp://localhost:2376') {
-            container.stop(app)
+            docker.stop(app)
         }
     }
 
